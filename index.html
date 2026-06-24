@@ -345,6 +345,7 @@
     let timer = null;
     let audioContext = null;
     let selectedVoice = null;
+    let songRunId = 0;
 
     letters.forEach((letter, i) => {
       const button = document.createElement("button");
@@ -372,8 +373,12 @@
     chooseVoice();
     speechSynthesis.onvoiceschanged = chooseVoice;
 
-    function speak(text, rate = .72, pitch = 1.35) {
-      if (!voiceOn || !("speechSynthesis" in window)) return;
+    function speak(text, rate = .72, pitch = 1.35, onFinished = null) {
+      if (!voiceOn || !("speechSynthesis" in window)) {
+        if (onFinished) timer = setTimeout(onFinished, 850);
+        return;
+      }
+
       speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
       if (selectedVoice) utterance.voice = selectedVoice;
@@ -381,6 +386,20 @@
       utterance.rate = rate;
       utterance.pitch = pitch;
       utterance.volume = 1;
+
+      if (onFinished) {
+        let finished = false;
+        const finishOnce = () => {
+          if (finished) return;
+          finished = true;
+          clearTimeout(timer);
+          onFinished();
+        };
+        utterance.onend = finishOnce;
+        utterance.onerror = finishOnce;
+        timer = setTimeout(finishOnce, 2600);
+      }
+
       speechSynthesis.speak(utterance);
     }
 
@@ -441,18 +460,20 @@
 
     function singStep() {
       if (!playing) return;
+      const currentRun = songRunId;
       showLetter(index);
-      playNote(melody[index], timings[index] / 1100);
-      speak(letters[index], .62, 1.45);
-      timer = setTimeout(() => {
+      playNote(melody[index], .7);
+      speak(`${letters[index]} for ${words[index]}`, .72, 1.38, () => {
+        if (!playing || currentRun !== songRunId) return;
         index++;
         if (index >= letters.length) finishSong();
-        else singStep();
-      }, timings[index]);
+        else timer = setTimeout(singStep, 220);
+      });
     }
 
     function startSong() {
       if (index >= letters.length) index = 0;
+      songRunId++;
       playing = true;
       playButton.textContent = "❚❚ Pause";
       singStep();
@@ -460,6 +481,7 @@
 
     function stopSong(resetVoice = true) {
       playing = false;
+      songRunId++;
       clearTimeout(timer);
       if (resetVoice) speechSynthesis.cancel();
       playButton.textContent = "▶ Sing with me";
