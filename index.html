@@ -1,0 +1,523 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#ffd85a">
+  <meta name="description" content="A cheerful alphabet sing-along app for young children.">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Sing ABCs">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+  <link rel="icon" href="assets/icon-192.png" sizes="192x192">
+  <title>Sing the ABCs</title>
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap");
+
+    :root {
+      color-scheme: light;
+      font-family: "Baloo 2", "Arial Rounded MT Bold", system-ui, sans-serif;
+      color: #263548;
+      background: #9bdcf5;
+      --ink: #263548;
+      --yellow: #ffd85a;
+      --coral: #ff6e66;
+      --blue: #5f9af8;
+      --green: #65b987;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #9bdcf5 url("assets/alphabet-meadow.png") center / cover fixed;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background: linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,250,220,.18));
+    }
+
+    button { font: inherit; }
+
+    .app {
+      position: relative;
+      width: min(1120px, 100%);
+      min-height: 100vh;
+      margin: auto;
+      padding: clamp(16px, 3vw, 34px);
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+      gap: clamp(12px, 2vw, 20px);
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand { display: flex; align-items: center; gap: 12px; }
+
+    .music-mark {
+      width: 52px;
+      height: 52px;
+      display: grid;
+      place-items: center;
+      border-radius: 18px;
+      background: var(--yellow);
+      box-shadow: 0 6px 0 #d8a923, 0 12px 24px rgba(54,69,57,.15);
+      font-size: 28px;
+      transform: rotate(-5deg);
+    }
+
+    h1 {
+      margin: 0;
+      color: #fff;
+      font-size: clamp(30px, 5vw, 55px);
+      line-height: .9;
+      letter-spacing: -.025em;
+      text-shadow: 0 4px 0 rgba(53,95,117,.24);
+    }
+
+    h1 span { display: block; color: #fff4b8; font-size: .44em; letter-spacing: .12em; }
+
+    .sound-button {
+      width: 52px;
+      height: 52px;
+      border: 2px solid rgba(255,255,255,.86);
+      border-radius: 50%;
+      background: rgba(255,255,255,.78);
+      color: var(--ink);
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(46,82,80,.14);
+      font-size: 23px;
+    }
+
+    .now-card {
+      width: min(680px, 100%);
+      margin: auto;
+      padding: clamp(14px, 2.5vw, 24px);
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: clamp(15px, 3vw, 28px);
+      border: 3px solid rgba(255,255,255,.78);
+      border-radius: 30px;
+      background: rgba(255,255,255,.83);
+      box-shadow: 0 16px 40px rgba(46,82,80,.17), inset 0 2px 0 #fff;
+      backdrop-filter: blur(8px);
+    }
+
+    .big-letter {
+      width: clamp(112px, 20vw, 170px);
+      aspect-ratio: 1;
+      display: grid;
+      place-items: center;
+      border-radius: 34px;
+      background: var(--yellow);
+      color: #fff;
+      font-size: clamp(84px, 16vw, 135px);
+      font-weight: 800;
+      line-height: 1;
+      text-shadow: 0 5px 0 rgba(167,118,15,.26);
+      box-shadow: inset 0 -9px 0 rgba(193,142,17,.18), 0 10px 0 #e0b128;
+      transition: transform .18s ease, background .2s ease;
+    }
+
+    .big-letter.bounce { animation: bounce .45s ease; }
+
+    .picture {
+      width: clamp(96px, 17vw, 145px);
+      aspect-ratio: 1;
+      display: grid;
+      place-items: center;
+      border: 3px solid #fff;
+      border-radius: 50%;
+      background: linear-gradient(145deg, #fffdf2, #ffeeb6);
+      font-family: "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
+      font-size: clamp(62px, 11vw, 104px);
+      line-height: 1;
+      box-shadow: inset 0 -7px 0 rgba(214,169,49,.14), 0 9px 20px rgba(60,81,75,.14);
+    }
+
+    .picture.pop { animation: picture-pop .48s ease; }
+
+    .now-copy small {
+      color: #688199;
+      font-size: clamp(14px, 2vw, 18px);
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .now-copy h2 {
+      margin: 4px 0 0;
+      color: var(--ink);
+      font-size: clamp(25px, 5vw, 46px);
+      line-height: 1;
+    }
+
+    .now-copy p {
+      margin: 7px 0 0;
+      color: #6a7a86;
+      font-size: clamp(16px, 2.3vw, 21px);
+      line-height: 1.15;
+    }
+
+    .alphabet {
+      align-self: center;
+      display: grid;
+      grid-template-columns: repeat(13, minmax(0, 1fr));
+      gap: clamp(5px, 1vw, 10px);
+      padding: clamp(12px, 2vw, 20px);
+      border: 3px solid rgba(255,255,255,.74);
+      border-radius: 28px;
+      background: rgba(255,255,255,.67);
+      box-shadow: 0 16px 38px rgba(43,84,75,.15);
+      backdrop-filter: blur(8px);
+    }
+
+    .letter {
+      aspect-ratio: 1;
+      min-width: 0;
+      border: 0;
+      border-radius: clamp(9px, 1.5vw, 16px);
+      color: #fff;
+      background: var(--tile, var(--blue));
+      font-size: clamp(20px, 3.6vw, 38px);
+      font-weight: 800;
+      line-height: 1;
+      cursor: pointer;
+      box-shadow: inset 0 -5px 0 rgba(41,60,70,.14), 0 5px 10px rgba(44,75,72,.12);
+      transition: transform .16s ease, filter .16s ease, opacity .16s ease;
+    }
+
+    .letter:nth-child(4n+1) { --tile: #ff746e; }
+    .letter:nth-child(4n+2) { --tile: #efad3e; }
+    .letter:nth-child(4n+3) { --tile: #5e9bf2; }
+    .letter:nth-child(4n) { --tile: #62b887; }
+
+    .letter:hover { transform: translateY(-3px); filter: brightness(1.05); }
+    .letter:active { transform: translateY(2px); }
+    .letter.past { opacity: .58; }
+    .letter.active {
+      transform: translateY(-7px) scale(1.14) rotate(-3deg);
+      outline: 5px solid #fff;
+      filter: saturate(1.2) brightness(1.06);
+      box-shadow: 0 12px 0 rgba(48,79,75,.16);
+      z-index: 2;
+    }
+
+    .controls {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .control {
+      min-height: 53px;
+      border: 2px solid rgba(255,255,255,.82);
+      border-radius: 18px;
+      padding: 9px 22px;
+      background: rgba(255,255,255,.9);
+      color: var(--ink);
+      font-size: 18px;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 7px 0 rgba(72,111,103,.22);
+    }
+
+    .control.primary {
+      min-width: 176px;
+      background: var(--coral);
+      color: #fff;
+      border-color: #ff9994;
+      box-shadow: 0 7px 0 #cf504a;
+      font-size: 21px;
+    }
+
+    .control:active { transform: translateY(4px); box-shadow: 0 3px 0 rgba(72,111,103,.2); }
+    .hint { text-align: center; color: rgba(31,67,78,.72); font-weight: 700; font-size: 14px; }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0) rotate(0); }
+      38% { transform: translateY(-13px) rotate(-4deg) scale(1.05); }
+      68% { transform: translateY(2px) rotate(2deg); }
+    }
+
+    @keyframes picture-pop {
+      0% { transform: scale(.72) rotate(8deg); opacity: .25; }
+      62% { transform: scale(1.09) rotate(-3deg); opacity: 1; }
+      100% { transform: scale(1) rotate(0); }
+    }
+
+    @media (max-width: 760px) {
+      .alphabet { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+      .letter:nth-last-child(-n+5) { transform: translateX(50%); }
+      .letter.active:nth-last-child(-n+5) { transform: translateX(50%) translateY(-5px) scale(1.1); }
+    }
+
+    @media (max-width: 470px) {
+      .app { padding: 13px; gap: 12px; }
+      .music-mark, .sound-button { width: 44px; height: 44px; }
+      .now-card { border-radius: 24px; }
+      .big-letter { width: 105px; border-radius: 25px; }
+      .picture { width: 88px; font-size: 58px; }
+      .now-copy { grid-column: 1 / -1; text-align: center; }
+      .alphabet { grid-template-columns: repeat(7, 1fr); padding: 10px; border-radius: 22px; }
+      .control { padding-inline: 14px; }
+      .control.primary { min-width: 145px; }
+      .hint { display: none; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <div class="brand">
+        <div class="music-mark" aria-hidden="true">♫</div>
+        <h1>Sing the ABCs <span>LEARN • SING • SMILE</span></h1>
+      </div>
+      <button class="sound-button" id="soundButton" type="button" aria-label="Turn voice off" title="Voice on">🔊</button>
+    </header>
+
+    <section class="now-card" aria-live="polite">
+      <div class="big-letter" id="bigLetter">A</div>
+      <div class="now-copy">
+        <small id="eyebrow">Ready to sing?</small>
+        <h2 id="phrase">A, B, C, D…</h2>
+        <p id="helper">Press play and sing along with me!</p>
+      </div>
+      <div class="picture" id="picture" role="img" aria-label="Apple">🍎</div>
+    </section>
+
+    <section class="alphabet" id="alphabet" aria-label="Alphabet letters"></section>
+
+    <footer>
+      <div class="controls">
+        <button class="control" id="restartButton" type="button">↻ Restart</button>
+        <button class="control primary" id="playButton" type="button">▶ Sing with me</button>
+      </div>
+      <div class="hint">Tap a letter or press A–Z on your keyboard to hear it</div>
+    </footer>
+  </main>
+
+  <script>
+    const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+    const words = [
+      "Apple", "Ball", "Cat", "Dog", "Elephant", "Fish", "Grapes", "Hat", "Ice cream",
+      "Juice", "Kite", "Lion", "Moon", "Nest", "Orange", "Penguin", "Queen", "Rainbow",
+      "Sun", "Tree", "Umbrella", "Violin", "Whale", "X-ray", "Yo-yo", "Zebra"
+    ];
+    const pictures = [
+      "🍎", "⚽", "🐱", "🐶", "🐘", "🐟", "🍇", "🎩", "🍦", "🧃", "🪁", "🦁", "🌙",
+      "🪺", "🍊", "🐧", "👸", "🌈", "☀️", "🌳", "☂️", "🎻", "🐳", "🩻", "🪀", "🦓"
+    ];
+    const colors = ["#ff746e", "#efad3e", "#5e9bf2", "#62b887"];
+    const melody = [60,60,67,67,69,69,67,65,65,64,64,62,62,60,67,67,65,65,64,64,62,67,67,65,65,64];
+    const timings = [520,520,520,520,520,520,760,520,520,520,520,520,520,760,520,520,520,520,520,520,760,470,470,470,470,900];
+
+    const alphabetEl = document.getElementById("alphabet");
+    const bigLetter = document.getElementById("bigLetter");
+    const phrase = document.getElementById("phrase");
+    const eyebrow = document.getElementById("eyebrow");
+    const helper = document.getElementById("helper");
+    const picture = document.getElementById("picture");
+    const playButton = document.getElementById("playButton");
+    const restartButton = document.getElementById("restartButton");
+    const soundButton = document.getElementById("soundButton");
+
+    let index = 0;
+    let playing = false;
+    let voiceOn = true;
+    let timer = null;
+    let audioContext = null;
+    let selectedVoice = null;
+
+    letters.forEach((letter, i) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "letter";
+      button.textContent = letter;
+      button.setAttribute("aria-label", `${letter} for ${words[i]}`);
+      button.addEventListener("click", () => previewLetter(i));
+      alphabetEl.appendChild(button);
+    });
+
+    const letterButtons = [...document.querySelectorAll(".letter")];
+
+    function chooseVoice() {
+      const voices = speechSynthesis.getVoices();
+      const preferred = [
+        /samantha/i, /ava/i, /serena/i, /victoria/i, /karen/i, /moira/i,
+        /female/i, /zira/i, /susan/i, /google uk english female/i
+      ];
+      selectedVoice = preferred
+        .map(pattern => voices.find(v => pattern.test(v.name) && /^en/i.test(v.lang)))
+        .find(Boolean) || voices.find(v => /^en-(GB|US|AU)/i.test(v.lang)) || voices[0];
+    }
+
+    chooseVoice();
+    speechSynthesis.onvoiceschanged = chooseVoice;
+
+    function speak(text, rate = .72, pitch = 1.35) {
+      if (!voiceOn || !("speechSynthesis" in window)) return;
+      speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      if (selectedVoice) utterance.voice = selectedVoice;
+      utterance.lang = selectedVoice?.lang || "en-US";
+      utterance.rate = rate;
+      utterance.pitch = pitch;
+      utterance.volume = 1;
+      speechSynthesis.speak(utterance);
+    }
+
+    function playNote(midi, duration = .42) {
+      try {
+        audioContext ||= new (window.AudioContext || window.webkitAudioContext)();
+        if (audioContext.state === "suspended") audioContext.resume();
+        const now = audioContext.currentTime;
+        const gain = audioContext.createGain();
+        const main = audioContext.createOscillator();
+        const soft = audioContext.createOscillator();
+        const frequency = 440 * Math.pow(2, (midi - 69) / 12);
+        main.type = "sine";
+        soft.type = "triangle";
+        main.frequency.value = frequency;
+        soft.frequency.value = frequency * 2;
+        gain.gain.setValueAtTime(.0001, now);
+        gain.gain.exponentialRampToValueAtTime(.10, now + .025);
+        gain.gain.exponentialRampToValueAtTime(.0001, now + duration);
+        main.connect(gain);
+        soft.connect(gain);
+        gain.connect(audioContext.destination);
+        main.start(now);
+        soft.start(now);
+        main.stop(now + duration + .03);
+        soft.stop(now + duration + .03);
+      } catch (_) {}
+    }
+
+    function showLetter(i) {
+      index = i;
+      const letter = letters[i];
+      bigLetter.textContent = letter;
+      bigLetter.style.background = colors[i % colors.length];
+      bigLetter.classList.remove("bounce");
+      void bigLetter.offsetWidth;
+      bigLetter.classList.add("bounce");
+      picture.textContent = pictures[i];
+      picture.setAttribute("aria-label", words[i]);
+      picture.classList.remove("pop");
+      void picture.offsetWidth;
+      picture.classList.add("pop");
+      eyebrow.textContent = playing ? "Sing this letter" : "Tap to explore";
+      phrase.textContent = `${letter} is for ${words[i]}!`;
+      helper.textContent = playing ? "Keep singing — you're doing great!" : `Say it with me: ${letter}`;
+      letterButtons.forEach((button, n) => {
+        button.classList.toggle("active", n === i);
+        button.classList.toggle("past", playing && n < i);
+      });
+    }
+
+    function previewLetter(i) {
+      stopSong(false);
+      showLetter(i);
+      playNote(melody[i], .48);
+      speak(`${letters[i]}. ${letters[i]} is for ${words[i]}.`, .72, 1.3);
+    }
+
+    function singStep() {
+      if (!playing) return;
+      showLetter(index);
+      playNote(melody[index], timings[index] / 1100);
+      speak(letters[index], .62, 1.45);
+      timer = setTimeout(() => {
+        index++;
+        if (index >= letters.length) finishSong();
+        else singStep();
+      }, timings[index]);
+    }
+
+    function startSong() {
+      if (index >= letters.length) index = 0;
+      playing = true;
+      playButton.textContent = "❚❚ Pause";
+      singStep();
+    }
+
+    function stopSong(resetVoice = true) {
+      playing = false;
+      clearTimeout(timer);
+      if (resetVoice) speechSynthesis.cancel();
+      playButton.textContent = "▶ Sing with me";
+    }
+
+    function finishSong() {
+      stopSong();
+      index = letters.length;
+      letterButtons.forEach(button => button.classList.remove("active", "past"));
+      bigLetter.textContent = "★";
+      bigLetter.style.background = "#efad3e";
+      picture.textContent = "🎉";
+      picture.setAttribute("aria-label", "Celebration");
+      eyebrow.textContent = "Wonderful!";
+      phrase.textContent = "You sang the ABCs!";
+      helper.textContent = "Hooray — give yourself a big clap!";
+      speak("Wonderful! You sang the A B C song!", .78, 1.3);
+    }
+
+    playButton.addEventListener("click", () => playing ? stopSong() : startSong());
+
+    restartButton.addEventListener("click", () => {
+      stopSong();
+      index = 0;
+      letterButtons.forEach(button => button.classList.remove("active", "past"));
+      showLetter(0);
+      eyebrow.textContent = "Ready to sing?";
+      phrase.textContent = "A, B, C, D…";
+      helper.textContent = "Press play and sing along with me!";
+    });
+
+    soundButton.addEventListener("click", () => {
+      voiceOn = !voiceOn;
+      if (!voiceOn) speechSynthesis.cancel();
+      soundButton.textContent = voiceOn ? "🔊" : "🔇";
+      soundButton.title = voiceOn ? "Voice on" : "Voice off";
+      soundButton.setAttribute("aria-label", voiceOn ? "Turn voice off" : "Turn voice on");
+    });
+
+    document.addEventListener("keydown", event => {
+      if (event.repeat || event.ctrlKey || event.metaKey || event.altKey) return;
+
+      const pressedLetter = event.key.toUpperCase();
+      const letterIndex = letters.indexOf(pressedLetter);
+      if (letterIndex === -1) return;
+
+      event.preventDefault();
+      previewLetter(letterIndex);
+      letterButtons[letterIndex].focus();
+    });
+
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./service-worker.js").catch(error => {
+          console.warn("Offline mode could not be enabled:", error);
+        });
+      });
+    }
+  </script>
+</body>
+</html>
