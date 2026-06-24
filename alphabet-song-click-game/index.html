@@ -1,0 +1,668 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#7357d8">
+  <meta name="description" content="Listen to the alphabet song and tap the letter you hear.">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Tap the ABC">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+  <title>Listen & Tap the ABC</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: "Arial Rounded MT Bold", "Trebuchet MS", system-ui, sans-serif;
+      --ink: #28344c;
+      --purple: #7357d8;
+      --pink: #ff6d86;
+      --yellow: #ffd65c;
+      --green: #55b98a;
+      --blue: #5798ef;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background: #a7def4 url("assets/alphabet-meadow.png") center / cover fixed;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      background: rgba(235, 247, 255, .36);
+      backdrop-filter: blur(2px);
+    }
+
+    button { font: inherit; }
+
+    .app {
+      width: min(1080px, 100%);
+      min-height: 100vh;
+      margin: auto;
+      padding: clamp(12px, 2.5vw, 28px);
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+      gap: clamp(10px, 2vw, 18px);
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    h1 {
+      margin: 0;
+      color: #fff;
+      font-size: clamp(27px, 5vw, 48px);
+      line-height: .95;
+      text-shadow: 0 4px 0 rgba(44, 70, 101, .23);
+    }
+
+    h1 small {
+      display: block;
+      margin-top: 7px;
+      color: #fff9be;
+      font-size: .38em;
+      letter-spacing: .1em;
+    }
+
+    .score {
+      min-width: 94px;
+      padding: 9px 14px;
+      border: 3px solid #fff;
+      border-radius: 18px;
+      background: var(--yellow);
+      text-align: center;
+      box-shadow: 0 7px 0 #d4a936;
+    }
+
+    .score span { display: block; font-size: 13px; font-weight: 800; }
+    .score strong { font-size: 25px; }
+
+    .prompt-card {
+      min-height: 138px;
+      padding: clamp(13px, 2.5vw, 22px);
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: clamp(12px, 2.4vw, 24px);
+      border: 3px solid rgba(255,255,255,.85);
+      border-radius: 28px;
+      background: rgba(255,255,255,.88);
+      box-shadow: 0 15px 34px rgba(51, 79, 91, .18);
+      backdrop-filter: blur(8px);
+    }
+
+    .singer {
+      width: clamp(86px, 15vw, 128px);
+      aspect-ratio: 1;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: linear-gradient(145deg, #fff0f4, #ffd4df);
+      font-size: clamp(49px, 9vw, 78px);
+      box-shadow: inset 0 -7px 0 rgba(202, 90, 116, .14);
+    }
+
+    .singer.singing { animation: sing .65s ease infinite alternate; }
+
+    .prompt-copy p {
+      margin: 0;
+      color: #758198;
+      font-size: clamp(15px, 2vw, 18px);
+      font-weight: 800;
+      letter-spacing: .07em;
+      text-transform: uppercase;
+    }
+
+    .prompt-copy h2 {
+      min-height: 1.1em;
+      margin: 4px 0;
+      color: var(--purple);
+      font-size: clamp(27px, 5vw, 47px);
+      line-height: 1;
+    }
+
+    .prompt-copy small {
+      color: #657389;
+      font-size: clamp(14px, 2vw, 18px);
+      font-weight: 700;
+    }
+
+    .replay {
+      width: 62px;
+      height: 62px;
+      border: 0;
+      border-radius: 50%;
+      background: var(--purple);
+      color: #fff;
+      cursor: pointer;
+      font-size: 27px;
+      box-shadow: 0 6px 0 #543ba9;
+    }
+
+    .replay:active { transform: translateY(4px); box-shadow: 0 2px 0 #543ba9; }
+    .replay:disabled { opacity: .45; cursor: default; }
+
+    .board {
+      min-height: 0;
+      display: grid;
+      grid-template-columns: repeat(13, minmax(0, 1fr));
+      gap: clamp(5px, 1vw, 9px);
+      align-content: center;
+      padding: clamp(10px, 2vw, 18px);
+      border: 3px solid rgba(255,255,255,.75);
+      border-radius: 28px;
+      background: rgba(255,255,255,.66);
+      box-shadow: 0 14px 30px rgba(46, 76, 86, .14);
+      backdrop-filter: blur(8px);
+    }
+
+    .letter {
+      aspect-ratio: 1;
+      min-width: 0;
+      border: 0;
+      border-radius: clamp(9px, 1.5vw, 16px);
+      background: var(--tile);
+      color: #fff;
+      font-size: clamp(20px, 4vw, 40px);
+      font-weight: 900;
+      line-height: 1;
+      cursor: pointer;
+      box-shadow: inset 0 -6px 0 rgba(39, 52, 68, .14), 0 5px 10px rgba(42, 65, 76, .13);
+      transition: transform .15s ease, opacity .2s ease;
+    }
+
+    .letter:nth-child(4n+1) { --tile: var(--pink); }
+    .letter:nth-child(4n+2) { --tile: #eaaa3d; }
+    .letter:nth-child(4n+3) { --tile: var(--blue); }
+    .letter:nth-child(4n) { --tile: var(--green); }
+    .letter:hover { transform: translateY(-3px); }
+    .letter:active { transform: translateY(2px); }
+    .letter.correct { animation: correct .55s ease; outline: 5px solid #fff; }
+    .letter.wrong { animation: wrong .35s ease; background: #a6afbc; }
+    .letter.solved { opacity: .46; }
+
+    .board.animals {
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+    }
+
+    .letter.animal {
+      aspect-ratio: 1.08;
+      display: grid;
+      place-items: center;
+      align-content: center;
+      gap: 3px;
+      padding: 5px;
+    }
+
+    .animal .animal-picture {
+      font-family: "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
+      font-size: clamp(34px, 6vw, 66px);
+      line-height: 1;
+    }
+
+    .animal .animal-name {
+      font-size: clamp(11px, 1.8vw, 18px);
+      line-height: 1;
+      text-transform: capitalize;
+    }
+
+    footer {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .footer-row {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .game-type, .mode, .start {
+      min-height: 50px;
+      padding: 9px 18px;
+      border: 2px solid #fff;
+      border-radius: 17px;
+      background: rgba(255,255,255,.9);
+      color: var(--ink);
+      cursor: pointer;
+      font-weight: 900;
+      box-shadow: 0 6px 0 rgba(71, 91, 103, .22);
+    }
+
+    .game-type.active { background: #cfc2ff; box-shadow: 0 6px 0 #9d88e6; }
+    .mode.active { background: var(--yellow); box-shadow: 0 6px 0 #d3a72e; }
+    .start { min-width: 170px; background: var(--pink); color: #fff; box-shadow: 0 6px 0 #c84d64; }
+    .mode:active, .start:active { transform: translateY(3px); }
+
+    .credits {
+      color: rgba(40, 52, 76, .7);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    @keyframes sing {
+      to { transform: rotate(-4deg) scale(1.05); }
+    }
+
+    @keyframes correct {
+      45% { transform: scale(1.2) rotate(-6deg); filter: brightness(1.12); }
+    }
+
+    @keyframes wrong {
+      25%, 75% { transform: translateX(-6px); }
+      50% { transform: translateX(6px); }
+    }
+
+    @media (max-width: 720px) {
+      .board { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+      .board.animals { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .prompt-card { grid-template-columns: auto 1fr; }
+      .replay { grid-column: 1 / -1; width: 100%; height: 46px; border-radius: 15px; }
+    }
+
+    @media (max-width: 440px) {
+      .app { padding: 10px; }
+      .prompt-card { border-radius: 22px; }
+      .singer { width: 75px; }
+      .board { padding: 9px; border-radius: 22px; }
+      .game-type, .mode, .start { min-height: 45px; padding-inline: 12px; font-size: 14px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <h1>Listen & Tap! <small>HEAR IT • FIND IT • LEARN IT</small></h1>
+      <div class="score"><span>FOUND</span><strong id="score">0 / 26</strong></div>
+    </header>
+
+    <section class="prompt-card" aria-live="polite">
+      <div class="singer" id="singer" aria-hidden="true">👩‍🎤</div>
+      <div class="prompt-copy">
+        <p id="status">Choose a mode</p>
+        <h2 id="prompt">Ready to play?</h2>
+        <small id="help">Listen carefully, then tap the letter you hear.</small>
+      </div>
+      <button class="replay" id="replay" type="button" aria-label="Sing the letter again" disabled>🔊</button>
+    </section>
+
+    <section class="board" id="board" aria-label="Alphabet choices"></section>
+
+    <footer>
+      <div class="footer-row">
+        <button class="game-type active" type="button" data-game="alphabet">🔤 Letters</button>
+        <button class="game-type" type="button" data-game="animals">🐾 Animals</button>
+      </div>
+      <div class="footer-row">
+        <button class="mode active" type="button" data-mode="sequential">A–Z Order</button>
+        <button class="mode" type="button" data-mode="shuffle">🔀 Mixed Order</button>
+        <button class="start" id="start" type="button">▶ Start Game</button>
+      </div>
+      <a class="credits" href="credits.html" target="_blank" rel="noopener">Animal sound credits</a>
+    </footer>
+  </main>
+
+  <script>
+    const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+    const words = [
+      "Apple", "Ball", "Cat", "Dog", "Elephant", "Fish", "Grapes", "Hat", "Ice cream",
+      "Juice", "Kite", "Lion", "Moon", "Nest", "Orange", "Penguin", "Queen", "Rainbow",
+      "Sun", "Tree", "Umbrella", "Violin", "Whale", "X-ray", "Yo-yo", "Zebra"
+    ];
+    const pictures = [
+      "🍎", "⚽", "🐱", "🐶", "🐘", "🐟", "🍇", "🎩", "🍦", "🧃", "🪁", "🦁", "🌙",
+      "🪺", "🍊", "🐧", "👸", "🌈", "☀️", "🌳", "☂️", "🎻", "🐳", "🩻", "🪀", "🦓"
+    ];
+    const notes = [60,60,67,67,69,69,67,65,65,64,64,62,62,60,67,67,65,65,64,64,62,67,67,65,65,60];
+    const animals = [
+      { name: "cat", picture: "🐱", audio: "assets/sounds/cat.mp3" },
+      { name: "dog", picture: "🐶", audio: "assets/sounds/dog.mp3" },
+      { name: "frog", picture: "🐸", audio: "assets/sounds/frog.mp3" },
+      { name: "bird", picture: "🐦", audio: "assets/sounds/bird.mp3" },
+      { name: "bear", picture: "🐻", audio: "assets/sounds/bear.mp3" },
+      { name: "lion", picture: "🦁", audio: "assets/sounds/lion.mp3" },
+      { name: "sheep", picture: "🐑", audio: "assets/sounds/sheep.mp3" },
+      { name: "chicken", picture: "🐔", audio: "assets/sounds/chicken.mp3" }
+    ];
+
+    const board = document.getElementById("board");
+    const scoreEl = document.getElementById("score");
+    const statusEl = document.getElementById("status");
+    const promptEl = document.getElementById("prompt");
+    const helpEl = document.getElementById("help");
+    const singer = document.getElementById("singer");
+    const replayButton = document.getElementById("replay");
+    const startButton = document.getElementById("start");
+    const gameButtons = [...document.querySelectorAll(".game-type")];
+    const modeButtons = [...document.querySelectorAll(".mode")];
+
+    let gameType = "alphabet";
+    let mode = "sequential";
+    let order = [...alphabet.keys()];
+    let round = 0;
+    let target = null;
+    let playing = false;
+    let waiting = false;
+    let voice = null;
+    let audioContext = null;
+    let animalAudio = null;
+    let timer = null;
+
+    function shuffle(items) {
+      const copy = [...items];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function chooseVoice() {
+      const voices = speechSynthesis.getVoices();
+      const preferred = [
+        /ava.*premium/i,
+        /ava.*enhanced/i,
+        /samantha.*enhanced/i,
+        /samantha/i,
+        /ava/i,
+        /google.*female/i,
+        /serena/i,
+        /victoria/i,
+        /karen/i,
+        /moira/i,
+        /female/i,
+        /zira/i
+      ];
+      voice = preferred
+        .map(pattern => voices.find(item => pattern.test(item.name) && /^en/i.test(item.lang)))
+        .find(Boolean) || voices.find(item => /^en-(GB|US|AU)/i.test(item.lang)) || voices[0];
+    }
+
+    chooseVoice();
+    speechSynthesis.onvoiceschanged = chooseVoice;
+
+    function itemCount() {
+      return gameType === "alphabet" ? alphabet.length : animals.length;
+    }
+
+    function renderBoard() {
+      board.innerHTML = "";
+      board.classList.toggle("animals", gameType === "animals");
+      board.setAttribute("aria-label", gameType === "alphabet" ? "Alphabet choices" : "Animal choices");
+
+      const items = gameType === "alphabet" ? alphabet : animals;
+      items.forEach((item, index) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = `letter${gameType === "animals" ? " animal" : ""}`;
+        button.dataset.index = index;
+
+        if (gameType === "alphabet") {
+          button.textContent = item;
+          button.setAttribute("aria-label", `Letter ${item}`);
+        } else {
+          button.innerHTML = `<span class="animal-picture">${item.picture}</span><span class="animal-name">${item.name}</span>`;
+          button.setAttribute("aria-label", item.name);
+        }
+
+        button.addEventListener("click", () => chooseItem(index, button));
+        board.appendChild(button);
+      });
+    }
+
+    renderBoard();
+
+    function playNote(midi) {
+      try {
+        audioContext ||= new (window.AudioContext || window.webkitAudioContext)();
+        if (audioContext.state === "suspended") audioContext.resume();
+        const now = audioContext.currentTime;
+        const oscillator = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+        oscillator.type = "sine";
+        oscillator.frequency.value = 440 * Math.pow(2, (midi - 69) / 12);
+        gain.gain.setValueAtTime(.0001, now);
+        gain.gain.exponentialRampToValueAtTime(.12, now + .025);
+        gain.gain.exponentialRampToValueAtTime(.0001, now + .7);
+        oscillator.connect(gain);
+        gain.connect(audioContext.destination);
+        oscillator.start(now);
+        oscillator.stop(now + .72);
+      } catch (_) {}
+    }
+
+    function stopAnimalSound() {
+      if (!animalAudio) return;
+      animalAudio.pause();
+      animalAudio.currentTime = 0;
+      animalAudio = null;
+    }
+
+    function playAnimalSound(index, onEnd) {
+      stopAnimalSound();
+      animalAudio = new Audio(animals[index].audio);
+      animalAudio.volume = .9;
+      let finished = false;
+
+      const finish = () => {
+        if (finished) return;
+        finished = true;
+        clearTimeout(timer);
+        stopAnimalSound();
+        if (onEnd) onEnd();
+      };
+
+      animalAudio.onended = finish;
+      animalAudio.onerror = finish;
+      animalAudio.play().catch(finish);
+      timer = setTimeout(finish, 3500);
+    }
+
+    function sing(text, onEnd) {
+      speechSynthesis.cancel();
+      singer.classList.add("singing");
+      const utterance = new SpeechSynthesisUtterance(text);
+      if (voice) utterance.voice = voice;
+      utterance.lang = voice?.lang || "en-US";
+      utterance.rate = .62;
+      utterance.pitch = 1.52;
+      let done = false;
+      const finish = () => {
+        if (done) return;
+        done = true;
+        singer.classList.remove("singing");
+        if (onEnd) onEnd();
+      };
+      utterance.onend = finish;
+      utterance.onerror = finish;
+      speechSynthesis.speak(utterance);
+      clearTimeout(timer);
+      timer = setTimeout(finish, 5500);
+    }
+
+    function singPrompt() {
+      if (!playing || target === null) return;
+      waiting = true;
+      replayButton.disabled = true;
+      const isAlphabet = gameType === "alphabet";
+      statusEl.textContent = isAlphabet
+        ? (mode === "sequential" ? "A–Z order" : "Mixed order")
+        : (mode === "sequential" ? "Easy animals" : "Mixed animals");
+      promptEl.textContent = `Listen… which ${isAlphabet ? "letter" : "animal"}?`;
+      helpEl.textContent = `Tap the ${isAlphabet ? "letter" : "animal picture"} after the song.`;
+      playNote(notes[target % notes.length]);
+      const request = isAlphabet
+        ? `Can you find the letter ${alphabet[target]}?`
+        : `Can you find the ${animals[target].name}? ${animals[target].name}.`;
+      sing(request, () => {
+        waiting = false;
+        replayButton.disabled = false;
+        promptEl.textContent = `Tap the ${isAlphabet ? "letter" : "animal"} you heard`;
+        helpEl.textContent = "Need to hear it again? Tap the speaker.";
+      });
+    }
+
+    function chooseItem(index, button) {
+      if (!playing || waiting) return;
+      if (index !== target) {
+        button.classList.remove("wrong");
+        void button.offsetWidth;
+        button.classList.add("wrong");
+        statusEl.textContent = "Good try!";
+        helpEl.textContent = "Listen once more and try again.";
+        waiting = true;
+        const retry = gameType === "alphabet"
+          ? `Oopsie! Let's try again. Find the letter ${alphabet[target]}.`
+          : `Oopsie! Let's try again. Find the ${animals[target].name}.`;
+        sing(retry, () => {
+          waiting = false;
+          button.classList.remove("wrong");
+        });
+        return;
+      }
+
+      waiting = true;
+      button.classList.add("correct", "solved");
+      statusEl.textContent = "Wonderful!";
+      const isAlphabet = gameType === "alphabet";
+      promptEl.textContent = isAlphabet
+        ? `${alphabet[target]} is for ${words[target]} ${pictures[target]}`
+        : `${animals[target].picture} ${animals[target].name}!`;
+      helpEl.textContent = `Get ready for the next ${isAlphabet ? "letter" : "animal"}…`;
+      playNote(notes[target % notes.length] + 12);
+      const praise = isAlphabet
+        ? `Yay! You found it! ${alphabet[target]} is for ${words[target]}.`
+        : `Yay! You found the ${animals[target].name}! Listen to the real ${animals[target].name}.`;
+      sing(praise, () => {
+        if (!isAlphabet) {
+          statusEl.textContent = `Listen to the ${animals[target].name}!`;
+          helpEl.textContent = "That is its real sound.";
+          playAnimalSound(target, completeRound);
+        } else {
+          completeRound();
+        }
+      });
+
+      function completeRound() {
+        round++;
+        scoreEl.textContent = `${round} / ${itemCount()}`;
+        button.classList.remove("correct");
+        if (round >= order.length) finishGame();
+        else {
+          target = order[round];
+          timer = setTimeout(singPrompt, 1200);
+        }
+      }
+    }
+
+    function startGame() {
+      clearTimeout(timer);
+      speechSynthesis.cancel();
+      stopAnimalSound();
+      const indexes = [...Array(itemCount()).keys()];
+      order = mode === "shuffle" ? shuffle(indexes) : indexes;
+      round = 0;
+      target = order[0];
+      playing = true;
+      waiting = false;
+      scoreEl.textContent = `0 / ${itemCount()}`;
+      startButton.textContent = "↻ New Game";
+      [...board.querySelectorAll(".letter")].forEach(button => button.classList.remove("correct", "wrong", "solved"));
+      singPrompt();
+    }
+
+    function finishGame() {
+      playing = false;
+      waiting = false;
+      target = null;
+      replayButton.disabled = true;
+      singer.textContent = "🎉";
+      statusEl.textContent = "You found them all!";
+      promptEl.textContent = gameType === "alphabet" ? "Amazing alphabet work!" : "Amazing animal work!";
+      helpEl.textContent = "Choose a mode and play again.";
+      sing(gameType === "alphabet"
+        ? "Hip hip hooray! You found all twenty six letters! Amazing job!"
+        : "Hip hip hooray! You found all the animals! Amazing job!");
+    }
+
+    gameButtons.forEach(button => {
+      button.addEventListener("click", () => {
+        clearTimeout(timer);
+        speechSynthesis.cancel();
+        stopAnimalSound();
+        gameType = button.dataset.game;
+        playing = false;
+        waiting = false;
+        target = null;
+        singer.textContent = "👩‍🎤";
+        gameButtons.forEach(item => item.classList.toggle("active", item === button));
+
+        if (gameType === "animals") {
+          mode = "shuffle";
+          modeButtons[0].textContent = "🐾 Easy Order";
+          modeButtons[1].textContent = "🔀 Mixed Animals";
+          statusEl.textContent = "Animal game selected";
+          promptEl.textContent = "Can you find the animals?";
+          helpEl.textContent = "Listen to the name, then tap its picture.";
+        } else {
+          mode = "sequential";
+          modeButtons[0].textContent = "A–Z Order";
+          modeButtons[1].textContent = "🔀 Mixed Order";
+          statusEl.textContent = "Letter game selected";
+          promptEl.textContent = "Can you find the letters?";
+          helpEl.textContent = "Listen to the letter, then tap it.";
+        }
+
+        modeButtons.forEach((item, index) => item.classList.toggle("active", gameType === "alphabet" ? index === 0 : index === 1));
+        scoreEl.textContent = `0 / ${itemCount()}`;
+        startButton.textContent = "▶ Start Game";
+        replayButton.disabled = true;
+        renderBoard();
+      });
+    });
+
+    modeButtons.forEach(button => {
+      button.addEventListener("click", () => {
+        mode = button.dataset.mode;
+        modeButtons.forEach(item => item.classList.toggle("active", item === button));
+        statusEl.textContent = mode === "sequential" ? "Easy order selected" : "Mixed order selected";
+        promptEl.textContent = gameType === "alphabet"
+          ? (mode === "sequential" ? "Letters will go from A to Z" : "Letters will come in surprise order")
+          : (mode === "sequential" ? "Animals will follow the board order" : "Animals will come in surprise order");
+      });
+    });
+
+    startButton.addEventListener("click", () => {
+      singer.textContent = "👩‍🎤";
+      startGame();
+    });
+
+    replayButton.addEventListener("click", singPrompt);
+
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => navigator.serviceWorker.register("./service-worker.js"));
+    }
+  </script>
+</body>
+</html>
